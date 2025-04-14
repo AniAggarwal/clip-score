@@ -7,13 +7,10 @@ This repository provides a batch-wise quick processing for calculating CLIP scor
 ## Installation
 
 Requirements:
+
 - Install PyTorch:
   ```
   pip install torch  # Choose a version that suits your GPU
-  ```
-- Install CLIP:
-  ```
-  pip install git+https://github.com/openai/CLIP.git
   ```
 - Install clip-score from [PyPI](https://pypi.org/project/clip-score/):
   ```
@@ -21,7 +18,9 @@ Requirements:
   ```
 
 ## Data Input Specifications
+
 This project is designed to process paired images and text files, and therefore requires two directories: one for images and one for text files.
+
 ### Image Files
 
 All images should be stored in a single directory. The image files can be in either `.png` or `.jpg` format.
@@ -56,6 +55,7 @@ Please adhere to the specified structure to ensure correct operation of the prog
 ## Usage
 
 To compute the CLIP score between images and texts, make sure that the image and text data are contained in two separate folders, and each sample has the same name in both modalities. Run the following command:
+
 ```
 python -m clip_score path/to/image path/to/text
 ```
@@ -65,6 +65,7 @@ If GPU is available, the project is set to run automatically on a GPU by default
 ## Computing CLIP Score within the Same Modality
 
 If you want to calculate the CLIP score within the same modality (e.g., image-image or text-text), follow the same folder structure as mentioned above. Additionally, specify the preferred modalities using the `--real_flag` and `--fake_flag` options. By default, `--real_flag=img` and `--fake_flag=txt`. Examples:
+
 ```
 python -m clip_score path/to/imageA path/to/imageB --real_flag img --fake_flag img
 python -m clip_score path/to/textA path/to/textB --real_flag txt --fake_flag txt

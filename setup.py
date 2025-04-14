@@ -42,16 +42,10 @@ if __name__ == '__main__':
             ],
         },
         install_requires=[
-            'numpy',
-            'pillow',
-            'torch>=1.7.1',
-            'torchvision>=0.8.2',
-            'ftfy',
-            'regex',
-            'tqdm',
+            'numpy', 'pillow', 'torch>=1.7.1', 'torchvision>=0.8.2', 'ftfy',
+            'regex', 'tqdm', 'clip @ git+https://github.com/openai/CLIP.git'
         ],
-        extras_require={'dev': ['flake8',
-                                'flake8-bugbear',
-                                'flake8-isort',
-                                'nox']},
+        extras_require={
+            'dev': ['flake8', 'flake8-bugbear', 'flake8-isort', 'nox']
+        },
     )
