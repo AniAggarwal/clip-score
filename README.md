@@ -4,6 +4,28 @@
 
 This repository provides a batch-wise quick processing for calculating CLIP scores. It uses the pretrained CLIP model to measure the cosine similarity between two modalities. The project structure is adapted from [pytorch-fid](https://github.com/mseitzer/pytorch-fid) and [CLIP](https://github.com/openai/CLIP).
 
+# 🔄 Update Notes (April 2025)
+
+The latest version introduces several major improvements:
+
+✅ Hugging Face integration: The CLIP model is now loaded from the Hugging Face Hub, using the implementation provided by the transformers library. This makes installation and model loading significantly more convenient and consistent across environments.
+
+✅ Default model: The default model is now set to openai/clip-vit-base-patch32.
+
+✅ Flexible text input: The text input is no longer restricted to a folder. You can now provide a single sentence as the prompt, enabling computation of the CLIP score between a batch of images and a fixed textual description.
+
+✅ Normalized CLIP score: The previous 100x scaling factor for the CLIP score has been removed. The current version outputs cosine similarity values directly, ensuring that the resulting CLIP scores remain strictly less than 1.
+
+# 🛠️ TODO List
+
+Add support for additional vision-language models such as DINO, BLIP, and their variants.
+
+Benchmark and compare multiple model types on common datasets.
+
+Extend evaluation scripts to support batch text prompts and multiple-language inputs.
+
+Add visualization tools for score distributions and attention maps.
+
 ## Installation
 
 Requirements:
@@ -15,6 +37,11 @@ Requirements:
 - Install clip-score from [PyPI](https://pypi.org/project/clip-score/):
   ```
   pip install clip-score
+  ```
+  [Optional] If you want to modify this project on your own, you can install it with:
+  ```
+  git clone https://github.com/Taited/clip-score && cd clip-score
+  pip install -e .
   ```
 
 ## Data Input Specifications
@@ -60,6 +87,12 @@ To compute the CLIP score between images and texts, make sure that the image and
 python -m clip_score path/to/image path/to/text
 ```
 
+Or, if you want to calculate the CLIP score across all images using the same prompt, you can run:
+
+```
+python -m clip_score path/to/image "your prompt here"
+```
+
 If GPU is available, the project is set to run automatically on a GPU by default. If you want to specify a particular GPU, you can use the `--device cuda:N` flag when running the script, where `N` is the index of the GPU you wish to use. In case you want to run the program on a CPU instead, you can specify this by using the `--device cpu` flag.
 
 ## Computing CLIP Score within the Same Modality
@@ -81,7 +114,7 @@ If you use this repository in your research, consider citing it using the follow
   title={{clip-score: CLIP Score for PyTorch}},
   month={March},
   year={2023},
-  note={Version 0.1.1},
+  note={Version 0.2.1},
   howpublished={\url{https://github.com/taited/clip-score}},
 }
 ```

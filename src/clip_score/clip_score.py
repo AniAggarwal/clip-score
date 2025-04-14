@@ -14,7 +14,7 @@ See --help to see further details.
 Code adapted from https://github.com/mseitzer/pytorch-fid and
 https://github.com/openai/CLIP.
 
-Copyright 2023 The Hong Kong Polytechnic University
+Copyright 2025 The Chinese University of Hong Kong, Shenzhen
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,15 +35,8 @@ from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 import torch
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
-from transformers import AutoProcessor, AutoTokenizer, CLIPModel
-
-try:
-    from tqdm import tqdm
-except ImportError:
-    # If tqdm is not available, provide a mock version of it
-    def tqdm(x):
-        return x
-
+from tqdm import tqdm
+from transformers import AutoModel, AutoProcessor, AutoTokenizer
 
 parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
 parser.add_argument('--batch-size',
@@ -52,7 +45,7 @@ parser.add_argument('--batch-size',
                     help='Batch size to use')
 parser.add_argument('--clip-model',
                     type=str,
-                    default='ViT-B/32',
+                    default='openai/clip-vit-base-patch32',
                     help='CLIP model to use')
 parser.add_argument('--num-workers',
                     type=int,
@@ -72,14 +65,8 @@ parser.add_argument('--fake_flag',
                     default='txt',
                     help=('The modality of real path. '
                           'Default to txt'))
-parser.add_argument('real_path',
-                    type=str,
-                    help=('Paths to the generated images or '
-                          'to .npz statistic files'))
-parser.add_argument('fake_path',
-                    type=str,
-                    help=('Paths to the generated images or '
-                          'to .npz statistic files'))
+parser.add_argument('real_path', type=str, help=('Path to your modality data'))
+parser.add_argument('fake_path', type=str, help=('Path to your modality data'))
 
 IMAGE_EXTENSIONS = {
     'bmp', 'jpg', 'jpeg', 'pgm', 'png', 'ppm', 'tif', 'tiff', 'webp'
@@ -96,7 +83,7 @@ class DummyDataset(Dataset):
                  real_path,
                  fake_path,
                  real_flag: str = 'img',
-                 fake_flag: str = 'img',
+                 fake_flag: str = 'txt',
                  transform=None,
                  tokenizer=None) -> None:
         super().__init__()
@@ -113,13 +100,27 @@ class DummyDataset(Dataset):
         # assert self._check()
 
     def __len__(self):
-        return len(self.real_folder)
+        if isinstance(self.real_folder, list):
+            real_folder_lenghth = len(self.real_folder)
+        else:
+            real_folder_lenghth = 1
+        if isinstance(self.fake_folder, list):
+            fake_folder_lenghth = len(self.fake_folder)
+        else:
+            fake_folder_lenghth = 1
+        return max(real_folder_lenghth, fake_folder_lenghth)
 
     def __getitem__(self, index):
         if index >= len(self):
             raise IndexError
-        real_path = self.real_folder[index]
-        fake_path = self.fake_folder[index]
+        if isinstance(self.real_folder, list):
+            real_path = self.real_folder[index]
+        else:
+            real_path = self.real_folder
+        if isinstance(self.fake_folder, list):
+            fake_path = self.fake_folder[index]
+        else:
+            fake_path = self.fake_folder
         real_data = self._load_modality(real_path, self.real_flag)
         fake_data = self._load_modality(fake_path, self.fake_flag)
 
@@ -143,9 +144,12 @@ class DummyDataset(Dataset):
         return img
 
     def _load_txt(self, path):
-        with open(path, 'r') as fp:
-            data = fp.read()
-            fp.close()
+        if osp.exists(path):
+            with open(path, 'r') as fp:
+                data = fp.read()
+                fp.close()
+        else:
+            data = path
         if self.transform is not None:
             data = self.tokenizer(data, padding=True, return_tensors='pt')
             for key in data:
@@ -161,6 +165,8 @@ class DummyDataset(Dataset):
         return True
 
     def _combine_without_prefix(self, folder_path, prefix='.'):
+        if not osp.exists(folder_path):
+            return folder_path
         folder = []
         for name in os.listdir(folder_path):
             if name[0] == prefix:
@@ -174,7 +180,6 @@ class DummyDataset(Dataset):
 def calculate_clip_score(dataloader, model, real_flag, fake_flag):
     score_acc = 0.
     sample_num = 0.
-    logit_scale = model.logit_scale.exp()
     for batch_data in tqdm(dataloader):
         real = batch_data['real']
         real_features = forward_modality(model, real, real_flag)
@@ -188,9 +193,7 @@ def calculate_clip_score(dataloader, model, real_flag, fake_flag):
             dim=1, keepdim=True).to(torch.float32)
 
         # calculate scores
-        # score = logit_scale * real_features @ fake_features.t()
-        # score_acc += torch.diag(score).sum()
-        score = logit_scale * (fake_features * real_features).sum()
+        score = (fake_features * real_features).sum()
         score_acc += score
         sample_num += real_features.shape[0]
 
@@ -232,10 +235,9 @@ def main():
         num_workers = args.num_workers
 
     print('Loading CLIP model: {}'.format(args.clip_model))
-    model = CLIPModel.from_pretrained('openai/clip-vit-base-patch32').to(
-        device)
-    processor = AutoProcessor.from_pretrained('openai/clip-vit-base-patch32')
-    tokenizer = AutoTokenizer.from_pretrained('openai/clip-vit-base-patch32')
+    model = AutoModel.from_pretrained(args.clip_model).to(device)
+    processor = AutoProcessor.from_pretrained(args.clip_model)
+    tokenizer = AutoTokenizer.from_pretrained(args.clip_model)
 
     dataset = DummyDataset(args.real_path,
                            args.fake_path,
