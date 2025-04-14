@@ -18,13 +18,7 @@ The latest version introduces several major improvements:
 
 # 🛠️ TODO List
 
-Add support for additional vision-language models such as DINO, BLIP, and their variants.
-
-Benchmark and compare multiple model types on common datasets.
-
-Extend evaluation scripts to support batch text prompts and multiple-language inputs.
-
-Add visualization tools for score distributions and attention maps.
+⬜ Add support for additional vision-language models such as DINO, BLIP, and their variants.
 
 ## Installation
 
