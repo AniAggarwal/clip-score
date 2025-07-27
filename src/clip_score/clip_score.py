@@ -151,7 +151,7 @@ class DummyDataset(Dataset):
         else:
             data = path
         if self.transform is not None:
-            data = self.tokenizer(data, padding=True, return_tensors='pt')
+            data = self.tokenizer(data, padding=True, return_tensors='pt', truncation=True)
             for key in data:
                 data[key] = data[key].squeeze()
         return data
